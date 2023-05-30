@@ -1,0 +1,22 @@
+<!-- Header/Banner -->
+{{{startTemplate}}}
+
+<!-- Content -->
+<h1 class="heading-text">Sketches <span>by Al Bohling</span></h1>
+<div class="container">
+  You can add a few words in this spot if you want. Maybe a little blurb on why you want to share these. Or what your
+  thought process is. Or whatever the heck you want.
+  <!-- heading text -->
+  <ul class="image-gallery">
+    {{#each sketches as | sketch |}}
+    <li>
+      <a href="{{slug}}.html" title="click to see details"
+        ><img src="images/thumbs/{{filename}}" alt="{{title}}" />
+        <div class="overlay"><span>{{title}}</span></div></a
+      >
+    </li>
+    {{/each}}
+  </ul>
+</div>
+<!-- Footer -->
+{{{endTemplate}}}

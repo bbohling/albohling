@@ -1,0 +1,4 @@
+node_modules
+dist
+local.js
+.DS_Store
