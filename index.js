@@ -8,7 +8,7 @@ const slugify = require('slugify');
 const handlebars = require('handlebars');
 
 const sketchFolder = './content/sketches';
-const extension = '.jpeg';
+const extension = '.jpg';
 const buildFolder = './dist';
 
 const templateFolder = `./templates`;
