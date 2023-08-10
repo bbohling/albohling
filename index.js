@@ -6,6 +6,7 @@ const fsp = fs.promises;
 const path = require('path');
 const slugify = require('slugify');
 const handlebars = require('handlebars');
+const Promise = require('bluebird');
 
 const sketchFolder = './content/sketches';
 const extension = '.jpg';
@@ -65,17 +66,18 @@ async function generateSketchImages({ filename, outputFolder }) {
     console.error('Error creating thumbs output path: ', error);
   }
 
-  // create image
-  await sharp(imagePath)
-    .resize({ width: 2000, height: 2000, fit: sharp.fit.inside, background: { r: 255, g: 255, b: 255, alpha: 1 } })
-    .toFile(`${outputFolder}/${filename}`)
-    .then(() => console.log('...image done'));
-
-  // create thumbnail
-  await sharp(imagePath)
-    .resize({ width: 800, height: 800, fit: sharp.fit.inside, background: { r: 255, g: 255, b: 255, alpha: 1 } })
-    .toFile(`${outputPathThumbs}/${filename}`)
-    .then(() => console.log('...thumbnail done'));
+  await Promise.all([
+    // create image
+    sharp(imagePath)
+      .resize({ width: 2000, height: 2000, fit: sharp.fit.inside, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+      .toFile(`${outputFolder}/${filename}`)
+      .then(() => console.log('...image done')),
+    // create thumbnail
+    sharp(imagePath)
+      .resize({ width: 800, height: 800, fit: sharp.fit.inside, background: { r: 255, g: 255, b: 255, alpha: 1 } })
+      .toFile(`${outputPathThumbs}/${filename}`)
+      .then(() => console.log('...thumbnail done')),
+  ]);
 }
 
 async function generateSketchIndex({ sketches, outputFolder }) {
@@ -148,6 +150,7 @@ async function generateHomepage({ outputFolder }) {
 }
 
 (async () => {
+  const timeStart = Date.now();
   const files = await getFileNames(sketchFolder);
   const sketches = [];
 
@@ -161,8 +164,15 @@ async function generateHomepage({ outputFolder }) {
     await generatePage({ meta: fileMeta, outputFolder: outputSketchesFolder });
   }
 
-  await generateSketchIndex({ sketches, outputFolder: outputSketchesFolder });
-  await generateHomepage({ outputFolder });
-  await copyAssets();
+  // await generateSketchIndex({ sketches, outputFolder: outputSketchesFolder });
+  // await generateHomepage({ outputFolder });
+  // await copyAssets();
+  Promise.all([
+    generateSketchIndex({ sketches, outputFolder: outputSketchesFolder }),
+    generateHomepage({ outputFolder }),
+    copyAssets(),
+  ]);
+  const timeEnd = Date.now();
   console.log('🥳 done.');
+  console.log(`time: ${(timeEnd - timeStart) / 1000} seconds`);
 })();

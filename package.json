@@ -9,6 +9,7 @@
   "author": "Brandon Bohling",
   "license": "UNLICENSED",
   "dependencies": {
+    "bluebird": "^3.7.2",
     "exifreader": "^4.9.2",
     "fs-extra": "^11.1.1",
     "handlebars": "^4.7.7",
