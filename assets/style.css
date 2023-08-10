@@ -13,6 +13,19 @@
   --header-height: 60px;
   --footer-height: 60px;
   --radius: 8px;
+  --gallery-image-height: 300px;
+}
+
+@media screen and (max-width: 992px) {
+  :root {
+    --gap: 12px;
+    --content-gap: 10px;
+    --nav-width: 992px;
+    --main-width: 720px;
+    --header-height: 40px;
+    --footer-height: 40px;
+    --gallery-image-height: 150px;
+  }
 }
 
 * {
@@ -144,7 +157,7 @@ ul {
 
 .image-gallery > li {
   flex: 1 1 20%; /* or flex: auto; */
-  height: 300px;
+  height: var(gallery-image-height);
   cursor: pointer;
   position: relative;
 }
