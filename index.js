@@ -8,7 +8,9 @@ const slugify = require('slugify');
 const handlebars = require('handlebars');
 const Promise = require('bluebird');
 
-const sketchFolder = './content/sketches';
+const sketchSource = './content';
+const sketchFolder = './content/sketches'; // todo: refactor
+const assignmentFolder = './content/assignment'; // todo: refactor
 const extension = '.jpg';
 const buildFolder = './dist';
 
@@ -69,7 +71,7 @@ async function generateSketchImages({ filename, outputFolder }) {
     console.error('Error creating thumbs output path: ', error);
   }
 
-  Promise.all([
+  await Promise.all([
     // create image
     sharp(imagePath)
       .resize({ width: 2000, height: 2000, fit: sharp.fit.inside, background: { r: 255, g: 255, b: 255, alpha: 1 } })
@@ -113,7 +115,7 @@ async function copyAssets() {
   }
 }
 
-async function generatePage({ meta, outputFolder }) {
+async function generatePage({ meta, previousSketchMeta, nextSketchMeta, outputFolder }) {
   const inputFolder = '/templates/sketches/page.html';
   const pageTemplateSource = fs.readFileSync(path.join(__dirname, inputFolder), 'utf8');
   const pageTemplate = handlebars.compile(pageTemplateSource);
@@ -121,6 +123,8 @@ async function generatePage({ meta, outputFolder }) {
   try {
     const html = pageTemplate({
       meta,
+      previousSketchMeta,
+      nextSketchMeta,
       startTemplate,
       endTemplate,
     });
@@ -152,9 +156,17 @@ async function generateHomepage({ outputFolder }) {
   }
 }
 
+function getSketchSourceDirectories(path) {
+  return fs
+    .readdirSync(path, { withFileTypes: true })
+    .filter((item) => item.isDirectory())
+    .map((dir) => `${path}/${dir.name}`);
+}
+
 (async () => {
   const timeStart = Date.now();
-  // get folder name/path from /content
+  // todo: get folder name/path from /content
+  const sketchSources = getSketchSourceDirectories(sketchSource);
 
   const files = await getFileNames(sketchFolder);
   const sketches = [];
@@ -165,14 +177,25 @@ async function generateHomepage({ outputFolder }) {
   for (const file of files) {
     const fileMeta = await getFileMeta(file);
     sketches.push(fileMeta);
-    await generateSketchImages({ filename: file, outputFolder: `${outputSketchesFolder}/images` });
-    await generatePage({ meta: fileMeta, outputFolder: outputSketchesFolder });
+    // await generateSketchImages({ filename: file, outputFolder: `${outputSketchesFolder}/images` });
+    // await generatePage({ meta: fileMeta, outputFolder: outputSketchesFolder });
   }
 
-  // await generateSketchIndex({ sketches, outputFolder: outputSketchesFolder });
-  // await generateHomepage({ outputFolder });
-  // await copyAssets();
-  Promise.all([
+  Promise.map(
+    sketches,
+    async (sketchMeta, index) => {
+      await generateSketchImages({ filename: sketchMeta.filename, outputFolder: `${outputSketchesFolder}/images` });
+      await generatePage({
+        meta: sketchMeta,
+        previousSketchMeta: index > 0 ? sketches[index - 1] : null,
+        nextSketchMeta: index < sketches.length - 1 ? sketches[index + 1] : null,
+        outputFolder: outputSketchesFolder,
+      });
+    },
+    { concurrency: 10 }
+  );
+
+  await Promise.all([
     generateSketchIndex({ sketches, outputFolder: outputSketchesFolder }),
     generateHomepage({ outputFolder }),
     copyAssets(),

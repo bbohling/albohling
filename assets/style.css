@@ -147,6 +147,11 @@ ul {
   list-style: none;
 }
 
+.image-nav {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.5em;
+}
 /* Responsive image gallery rules begin*/
 
 .image-gallery {

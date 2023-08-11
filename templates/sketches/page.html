@@ -3,6 +3,18 @@
 
 <!-- Content -->
 <h1 class="heading-text">{{meta.title}} <span>by Al Bohling</span></h1>
+<div class="image-nav">
+  <div>
+    {{#if previousSketchMeta}}
+    <a href="/sketches/{{previousSketchMeta.slug}}.html">previous</a>
+    {{/if}}
+  </div>
+  <div>
+    {{#if nextSketchMeta}}
+    <a href="/sketches/{{nextSketchMeta.slug}}.html">next</a>
+    {{/if}}
+  </div>
+</div>
 <figure>
   <img src="images/{{meta.filename}}" alt="{{meta.title}}" />
   <figcaption>{{meta.caption}}</figcaption>
