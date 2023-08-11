@@ -1,0 +1,23 @@
+<!-- Header/Banner -->
+{{{startTemplate}}}
+
+<!-- Content -->
+<h1 class="heading-text">{{meta.title}} <span>by Al Bohling</span></h1>
+<div class="image-nav">
+  <div>
+    {{#if previousSketchMeta}}
+    <a href="/assignment/{{previousSketchMeta.slug}}.html">previous</a>
+    {{/if}}
+  </div>
+  <div>
+    {{#if nextSketchMeta}}
+    <a href="/assignment/{{nextSketchMeta.slug}}.html">next</a>
+    {{/if}}
+  </div>
+</div>
+<figure>
+  <img src="images/{{meta.filename}}" alt="{{meta.title}}" />
+  <figcaption>{{meta.caption}}</figcaption>
+</figure>
+<!-- Footer -->
+{{{endTemplate}}} `

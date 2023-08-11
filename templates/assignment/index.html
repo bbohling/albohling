@@ -1,0 +1,24 @@
+<!-- Header/Banner -->
+{{{startTemplate}}}
+
+<!-- Content -->
+<h1 class="heading-text">Assignment <span>by Al Bohling</span></h1>
+<div class="container">
+  <p>
+    My grandson, Alfred Bryce Bohling (Bryce) suggested we send each other a quick sketch each day taking no more than
+    30 minutes. Some took just a couple of minutes. We had fun and stayed connected even with two time zones apart.
+  </p>
+  <!-- heading text -->
+  <ul class="image-gallery">
+    {{#each sketches as | sketch |}}
+    <li>
+      <a href="{{slug}}.html" title="click to see details"
+        ><img src="images/thumbs/{{filename}}" alt="{{title}}" />
+        <div class="overlay"><span>{{title}}</span></div></a
+      >
+    </li>
+    {{/each}}
+  </ul>
+</div>
+<!-- Footer -->
+{{{endTemplate}}}

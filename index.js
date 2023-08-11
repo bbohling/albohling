@@ -9,8 +9,8 @@ const handlebars = require('handlebars');
 const Promise = require('bluebird');
 
 const sketchSource = './content';
-const sketchFolder = './content/sketches'; // todo: refactor
-const assignmentFolder = './content/assignment'; // todo: refactor
+// const sourceFolder = './content/sketches'; // todo: refactor
+// const assignmentFolder = './content/assignment'; // todo: refactor
 const extension = '.jpg';
 const buildFolder = './dist';
 
@@ -41,8 +41,8 @@ async function getFileNames(directory) {
   }
 }
 
-async function getFileMeta(filename) {
-  const imagePath = `${sketchFolder}/${filename}`;
+async function getFileMeta({ filename, sourceFolder }) {
+  const imagePath = `${sourceFolder}/${filename}`;
   const tags = await ExifReader.load(imagePath, { includeUnknown: true, expanded: true });
   // const slug = slugify(filename, slugifyOptions);
 
@@ -60,9 +60,9 @@ async function getFileMeta(filename) {
   return meta;
 }
 
-async function generateSketchImages({ filename, outputFolder }) {
+async function generateSketchImages({ filename, sourceFolder, outputFolder }) {
   console.log(`🖼 create images for: ${filename}`);
-  const imagePath = `${sketchFolder}/${filename}`;
+  const imagePath = `${sourceFolder}/${filename}`;
   const outputPathThumbs = `${outputFolder}/thumbs`;
 
   try {
@@ -85,8 +85,8 @@ async function generateSketchImages({ filename, outputFolder }) {
   ]);
 }
 
-async function generateSketchIndex({ sketches, outputFolder }) {
-  const inputFolder = '/templates/sketches/index.html';
+async function generateSketchIndex({ sketches, sourceFolder, outputFolder }) {
+  const inputFolder = `/templates/${sourceFolder}/index.html`;
   const sketchesTemplateSource = fs.readFileSync(path.join(__dirname, inputFolder), 'utf8');
   const template = handlebars.compile(sketchesTemplateSource);
 
@@ -115,8 +115,8 @@ async function copyAssets() {
   }
 }
 
-async function generatePage({ meta, previousSketchMeta, nextSketchMeta, outputFolder }) {
-  const inputFolder = '/templates/sketches/page.html';
+async function generatePage({ meta, previousSketchMeta, nextSketchMeta, sourceFolder, outputFolder }) {
+  const inputFolder = `/templates/${sourceFolder}/page.html`;
   const pageTemplateSource = fs.readFileSync(path.join(__dirname, inputFolder), 'utf8');
   const pageTemplate = handlebars.compile(pageTemplateSource);
 
@@ -160,7 +160,7 @@ function getSketchSourceDirectories(path) {
   return fs
     .readdirSync(path, { withFileTypes: true })
     .filter((item) => item.isDirectory())
-    .map((dir) => `${path}/${dir.name}`);
+    .map((dir) => dir.name);
 }
 
 (async () => {
@@ -168,36 +168,47 @@ function getSketchSourceDirectories(path) {
   // todo: get folder name/path from /content
   const sketchSources = getSketchSourceDirectories(sketchSource);
 
-  const files = await getFileNames(sketchFolder);
-  const sketches = [];
+  await Promise.map(
+    sketchSources,
+    async (sourceFolder) => {
+      // do the things
+      const files = await getFileNames(`${sketchSource}/${sourceFolder}`);
+      const sketches = [];
 
-  const outputFolder = `${buildFolder}`;
-  const outputSketchesFolder = `${outputFolder}/sketches`;
+      const outputFolder = `${buildFolder}`;
+      const outputSketchesFolder = `${outputFolder}/${sourceFolder}`;
 
-  for (const file of files) {
-    const fileMeta = await getFileMeta(file);
-    sketches.push(fileMeta);
-    // await generateSketchImages({ filename: file, outputFolder: `${outputSketchesFolder}/images` });
-    // await generatePage({ meta: fileMeta, outputFolder: outputSketchesFolder });
-  }
+      for (const file of files) {
+        const fileMeta = await getFileMeta({ filename: file, sourceFolder: `${sketchSource}/${sourceFolder}` });
+        sketches.push(fileMeta);
+      }
 
-  Promise.map(
-    sketches,
-    async (sketchMeta, index) => {
-      await generateSketchImages({ filename: sketchMeta.filename, outputFolder: `${outputSketchesFolder}/images` });
-      await generatePage({
-        meta: sketchMeta,
-        previousSketchMeta: index > 0 ? sketches[index - 1] : null,
-        nextSketchMeta: index < sketches.length - 1 ? sketches[index + 1] : null,
-        outputFolder: outputSketchesFolder,
-      });
+      await Promise.map(
+        sketches,
+        async (sketchMeta, index) => {
+          await generateSketchImages({
+            filename: sketchMeta.filename,
+            sourceFolder: `${sketchSource}/${sourceFolder}`,
+            outputFolder: `${outputSketchesFolder}/images`,
+          });
+          await generatePage({
+            meta: sketchMeta,
+            previousSketchMeta: index > 0 ? sketches[index - 1] : null,
+            nextSketchMeta: index < sketches.length - 1 ? sketches[index + 1] : null,
+            sourceFolder: sourceFolder,
+            outputFolder: outputSketchesFolder,
+          });
+          await generateSketchIndex({ sketches, sourceFolder, outputFolder: outputSketchesFolder });
+        },
+        { concurrency: 10 }
+      );
     },
-    { concurrency: 10 }
+    { concurrency: 5 }
   );
 
   await Promise.all([
-    generateSketchIndex({ sketches, outputFolder: outputSketchesFolder }),
-    generateHomepage({ outputFolder }),
+    // generateSketchIndex({ sketches, sourceFolder, outputFolder: outputSketchesFolder }),
+    generateHomepage({ outputFolder: buildFolder }),
     copyAssets(),
   ]);
   const timeEnd = Date.now();
