@@ -42,15 +42,18 @@ async function getFileNames(directory) {
 async function getFileMeta(filename) {
   const imagePath = `${sketchFolder}/${filename}`;
   const tags = await ExifReader.load(imagePath, { includeUnknown: true, expanded: true });
-  const slug = slugify(filename, slugifyOptions);
+  // const slug = slugify(filename, slugifyOptions);
 
   const meta = {
     filename,
     createdAt: tags.iptc['Date Created']?.description,
     title: tags.iptc['Object Name']?.description,
     caption: tags.iptc['Caption/Abstract']?.description,
-    slug,
+    // slug,
   };
+
+  const slug = slugify(meta?.title || filename, slugifyOptions);
+  meta.slug = slug;
 
   return meta;
 }
@@ -66,7 +69,7 @@ async function generateSketchImages({ filename, outputFolder }) {
     console.error('Error creating thumbs output path: ', error);
   }
 
-  await Promise.all([
+  Promise.all([
     // create image
     sharp(imagePath)
       .resize({ width: 2000, height: 2000, fit: sharp.fit.inside, background: { r: 255, g: 255, b: 255, alpha: 1 } })
@@ -151,6 +154,8 @@ async function generateHomepage({ outputFolder }) {
 
 (async () => {
   const timeStart = Date.now();
+  // get folder name/path from /content
+
   const files = await getFileNames(sketchFolder);
   const sketches = [];
 
