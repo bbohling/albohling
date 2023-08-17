@@ -162,7 +162,7 @@ ul {
 
 .image-gallery > li {
   flex: 1 1 20%; /* or flex: auto; */
-  height: var(gallery-image-height);
+  /* height: var(gallery-image-height); */
   cursor: pointer;
   position: relative;
 }
