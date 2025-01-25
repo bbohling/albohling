@@ -11,7 +11,8 @@ const Promise = require('bluebird');
 const sketchSource = './content';
 // const sourceFolder = './content/sketches'; // todo: refactor
 // const assignmentFolder = './content/assignment'; // todo: refactor
-const extension = '.jpg';
+const sourceExtension = '.jpg';
+const targetExtension = '.webp';
 const buildFolder = './dist';
 
 const templateFolder = `./templates`;
@@ -33,7 +34,7 @@ async function getFileNames(directory) {
   try {
     const filenames = await fse.readdir(directory);
     const targetFilenames = filenames.filter((file) => {
-      return path.extname(file).toLowerCase() === extension;
+      return path.extname(file).toLowerCase() === sourceExtension;
     });
     return targetFilenames;
   } catch (err) {
@@ -47,7 +48,9 @@ async function getFileMeta({ filename, sourceFolder }) {
   // const slug = slugify(filename, slugifyOptions);
 
   const meta = {
-    filename,
+    // filename,
+    sourceFilename: filename,
+    targetFilename: `${path.parse(filename).name}${targetExtension}`,
     createdAt: tags.iptc['Date Created']?.description,
     title: tags.iptc['Object Name']?.description,
     caption: tags.iptc['Caption/Abstract']?.description,
@@ -60,9 +63,9 @@ async function getFileMeta({ filename, sourceFolder }) {
   return meta;
 }
 
-async function generateSketchImages({ filename, sourceFolder, outputFolder }) {
-  console.log(`🖼 create images for: ${filename}`);
-  const imagePath = `${sourceFolder}/${filename}`;
+async function generateSketchImages({ sourceFilename, targetFilename, sourceFolder, outputFolder }) {
+  console.log(`🖼 create images for: ${sourceFilename}`);
+  const imagePath = `${sourceFolder}/${sourceFilename}`;
   const outputPathThumbs = `${outputFolder}/thumbs`;
 
   try {
@@ -75,12 +78,14 @@ async function generateSketchImages({ filename, sourceFolder, outputFolder }) {
     // create image
     sharp(imagePath)
       .resize({ width: 2000, height: 2000, fit: sharp.fit.inside, background: { r: 255, g: 255, b: 255, alpha: 1 } })
-      .toFile(`${outputFolder}/${filename}`)
+      .webp({ quality: 70 })
+      .toFile(`${outputFolder}/${targetFilename}`)
       .then(() => console.log('...image done')),
     // create thumbnail
     sharp(imagePath)
       .resize({ width: 800, height: 800, fit: sharp.fit.inside, background: { r: 255, g: 255, b: 255, alpha: 1 } })
-      .toFile(`${outputPathThumbs}/${filename}`)
+      .webp({ quality: 70 })
+      .toFile(`${outputPathThumbs}/${targetFilename}`)
       .then(() => console.log('...thumbnail done')),
   ]);
 }
@@ -187,7 +192,8 @@ function getSketchSourceDirectories(path) {
         sketches,
         async (sketchMeta, index) => {
           await generateSketchImages({
-            filename: sketchMeta.filename,
+            sourceFilename: sketchMeta.sourceFilename,
+            targetFilename: sketchMeta.targetFilename,
             sourceFolder: `${sketchSource}/${sourceFolder}`,
             outputFolder: `${outputSketchesFolder}/images`,
           });
